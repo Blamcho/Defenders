@@ -1,55 +1,43 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour
+namespace DefaultNamespace
 {
-    public float speed = 2f;
-    public int health = 3;
-    private Transform target;
-    private int waypointIndex = 0;
-
-    void Start()
+    public abstract class Enemy : MonoBehaviour, IDamageable
     {
-        target = Waypoints.points[waypointIndex];
-    }
+        protected int health;
+        protected int damage;
+        protected EnemyMovement movement;
 
-    void Update()
-    {
-        MoveTowardsWaypoint();
-    }
-
-    void MoveTowardsWaypoint()
-    {
-        if (target == null) return;
-
-        transform.position = Vector2.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
-
-        if (Vector2.Distance(transform.position, target.position) < 0.2f)
+        public virtual void Initialize(int health, int damage, IMovementStrategy movementStrategy)
         {
-            GetNextWaypoint();
-        }
-    }
-
-    void GetNextWaypoint()
-    {
-        if (waypointIndex >= Waypoints.points.Length - 1)
-        {
-            Destroy(gameObject); // Enemigo llega al final y desaparece
-            return;
+            this.health = health;
+            this.damage = damage;
+            this.movement = new EnemyMovement(movementStrategy);
         }
 
-        waypointIndex++;
-        target = Waypoints.points[waypointIndex];
-    }
-
-    public void TakeDamage(int damage)
-    {
-        health -= damage;
-        if (health <= 0)
+        public void Move()
         {
+            movement.Move(transform);
+        }
+
+        public void TakeDamage(int amount)
+        {
+            health -= amount;
+            if (health <= 0)
+            {
+                Die();
+            }
+        }
+
+        protected virtual void Die()
+        {
+            Debug.Log($"{gameObject.name} ha muerto.");
             Destroy(gameObject);
+        }
+
+        protected virtual void Update()
+        {
+            Move();
         }
     }
 }
-
